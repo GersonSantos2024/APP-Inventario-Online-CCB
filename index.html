@@ -148,11 +148,6 @@
         </div>
         
         <div class="input-group">
-            <label>2. Tabela de Setores</label>
-            <input type="file" id="fileSetor" accept=".csv">
-        </div>
-        
-        <div class="input-group">
             <label>2. Base Geral de Bens</label>
             <input type="file" id="fileGeral" accept=".csv">
         </div>
@@ -267,12 +262,10 @@
         let audioContext = null;
     document.getElementById('casaOracaoSelect')
        .addEventListener('change', function() {
-
           const codigo = this.value;
           const setor = churchSectorMapping[codigo];
             if (setor) {
-                  document.getElementById(
-            'setorAdministrativoSelect'
+                  document.getElementById('setorAdministrativoSelect'
         ).value = setor;
     }
 });
