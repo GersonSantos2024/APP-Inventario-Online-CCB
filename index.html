@@ -306,34 +306,8 @@
                                 select.appendChild(new Option(`${code} - ${name}`, code));
                                 count++;
                             }
-                        }
-                        
-        document.getElementById('fileSetor').addEventListener('change', function(event) {
-            const file = event.target.files[0]; if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {   
-               try {
-                   const rows = e.target.result.split(/\r\n|\n|\r/);
-                   setorMapping = {};
-                   const select = document.getElementById('setorSelect');
-                   select.innerHTML = '<option value="">Selecione o Setor...</option>';
-                   const delimiter = rows[0].indexOf(';') !== -1 ? ';' : ',';
-                   let count = 0;
-
-                    rows.forEach(row => {
-                        if (!row.trim()) return;
-                        const cols = splitCSV(row, delimiter);
-                        if (cols.length >= 2) {
-                            const code = cols[0].replace(/[^0-9]/g, ""); 
-                            const name = cols[1];
-                            if (code && !name.toLowerCase().includes("nome")) {
-                                setorMapping[code] = name;
-                                select.appendChild(new Option(`${code} - ${name}`, code));
-                                count++;
-                            }
-                        }
-                    });
-                    if(count > 0) alert(`Igrejas carregadas: ${count} locais.`);
+                        }                   
+                     if(count > 0) alert(`Igrejas carregadas: ${count} locais.`);
                     else alert("Nenhuma igreja válida encontrada no arquivo CSV!");
                 } catch(e) { alert("Erro de arquivo: " + e.message); }
             }; reader.readAsText(file, 'ISO-8859-1');
