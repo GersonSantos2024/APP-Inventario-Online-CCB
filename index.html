@@ -2,117 +2,20 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- Política de Segurança (CSP) -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://congregacaocristanobrasil.org.br; connect-src 'self' blob:;">
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Política de Segurança (CSP) - atualizar no servidor para nonces/hashes em produção -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://cdnjs.cloudflare.com https://unpkg.com; script-src 'self' https://cdnjs.cloudflare.com https://unpkg.com; style-src 'self' https://fonts.googleapis.com; img-src 'self' data: https://congregacaocristanobrasil.org.br;">
+
     <title>Inventário Ativo Imobilizado CCB</title>
-    
-    <!-- Bibliotecas PDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-    <!-- Leitor de Câmera -->
-    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-    
+
+    <!-- Bibliotecas PDF e CSV (PapaParse via CDN será usada) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js" defer></script>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" defer></script>
+
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-        :root {
-            --primary: #2a9d8f; --primary-hover: #21867a;
-            --bg-color: #eef2f7; --panel-bg: #ffffff;
-            --text-main: #333; --text-muted: #6c757d;
-            --success: #28a745; --danger: #dc3545; --warning: #ffc107;
-        }
-
-        body { display: flex; height: 100vh; background-color: var(--bg-color); color: var(--text-main); overflow: hidden; }
-
-        /* TELA DE LOGIN SEGURA */
-        #loginOverlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            z-index: 99999; display: flex; align-items: center; justify-content: center;
-        }
-        .login-card {
-            background: #fff; padding: 40px 30px; border-radius: 12px; text-align: center; max-width: 90%; width: 350px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-        }
-        .login-card img { height: 60px; margin-bottom: 20px; }
-        .login-card h2 { margin-bottom: 20px; color: #333; font-size: 1.4rem; }
-        .login-card input {
-            width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ced4da;
-            border-radius: 6px; font-size: 1rem; text-align: center;
-        }
-        .login-card button { background-color: #1e3c72; font-size: 1.1rem; }
-        .login-card button:hover { background-color: #162c55; }
-        #loginError { color: var(--danger); font-size: 0.9rem; margin-top: 10px; display: none; font-weight: 600; }
-
-        /* Modal de Seleção de Uso */
-        #modeOverlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8); z-index: 9999; display: none; 
-            align-items: center; justify-content: center;
-        }
-        .mode-card { background: #fff; padding: 30px; border-radius: 10px; text-align: center; max-width: 90%; width: 400px; }
-        .mode-card h2 { margin-bottom: 20px; color: var(--primary); }
-        .mode-btn {
-            display: flex; align-items: center; justify-content: center; width: 100%; padding: 15px; margin-bottom: 15px;
-            font-size: 1.1rem; border: 2px solid var(--primary); background: white; color: var(--primary);
-            border-radius: 8px; cursor: pointer; transition: 0.3s; font-weight: 600;
-        }
-        .mode-btn:hover { background: var(--primary); color: white; }
-        
-        /* Controles - Sidebar */
-        .sidebar { width: 380px; background-color: var(--panel-bg); padding: 20px; box-shadow: 2px 0 10px rgba(0,0,0,0.05); display: flex; flex-direction: column; overflow-y: auto; z-index: 10; filter: blur(4px); pointer-events: none; transition: 0.3s; }
-        .sidebar.unlocked { filter: blur(0); pointer-events: all; }
-        .header-logo { text-align: center; margin-bottom: 20px; }
-        .header-logo img { height: 70px; margin-bottom: 10px; }
-        .header-logo h1 { font-size: 1.2rem; color: var(--primary); }
-
-        .input-group { margin-bottom: 12px; }
-        .input-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 5px; }
-        input[type="file"], input[type="text"], input[type="password"], input[type="date"], select {
-            width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 0.9rem; background-color: #fff; outline: none;
-        }
-        input:focus, select:focus { border-color: var(--primary); }
-        input:read-only, select:disabled { background-color: #e9ecef; cursor: not-allowed; }
-
-        button { width: 100%; padding: 12px; background-color: var(--primary); color: white; border: none; border-radius: 5px; font-weight: 600; cursor: pointer; transition: 0.3s; margin-top: 10px; }
-        button:hover { background-color: var(--primary-hover); }
-        button:disabled { background-color: #a5c7c3; cursor: not-allowed; }
-        .btn-danger { background-color: var(--danger); }
-
-        #reader-container { display: none; margin-top: 15px; width: 100%; border-radius: 8px; overflow: hidden; border: 2px solid var(--primary); background: #000; min-height: 250px;}
-        #reader { width: 100%; }
-        #camera-status { text-align: center; font-size: 0.85rem; font-weight: bold; padding: 10px; color: white; background: #333; }
-
-        /* Dashboard Principal */
-        .main-content { flex: 1; padding: 20px; display: flex; flex-direction: column; overflow-y: auto; filter: blur(4px); pointer-events: none; transition: 0.3s; }
-        .main-content.unlocked { filter: blur(0); pointer-events: all; }
-        
-        .dashboard-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
-        .card { background: var(--panel-bg); padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: center; }
-        .card h3 { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; }
-        .card .value { font-size: 1.8rem; font-weight: 600; margin-top: 5px; }
-        .c-total { color: #007bff; } .c-located { color: var(--success); } .c-missing { color: var(--danger); } .c-unknown { color: var(--warning); }
-
-        .table-container { flex: 1; background: var(--panel-bg); border-radius: 8px; padding: 15px; overflow-y: auto; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #dee2e6; }
-        th { background-color: #f8f9fa; position: sticky; top: 0; color: var(--text-muted); z-index: 5; }
-        .badge { padding: 5px 8px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; color: white; }
-        .bg-success { background-color: var(--success); } .bg-danger { background-color: var(--danger); } .bg-warning { background-color: var(--warning); color: #333; }
-        .alerta-ext { color: #d9534f; font-weight: 600; font-size: 0.85em; display: block; margin-top: 4px; }
-
-        /* Responsividade Mobile */
-        @media (max-width: 768px) {
-            body { flex-direction: column; display: block; overflow-y: auto; height: auto; min-height: 100vh; }
-            .sidebar { width: 100%; padding: 15px; box-shadow: none; overflow-y: visible; }
-            .main-content { padding: 10px; overflow-y: visible; display: block; }
-            .dashboard-cards { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-            .table-container { overflow-x: auto; max-height: 60vh; }
-            th, td { white-space: nowrap; }
-        }
-    </style>
+    <link rel="stylesheet" href="src/styles.css">
 </head>
 <body>
 
@@ -121,9 +24,10 @@
         <div class="login-card">
             <img src="https://congregacaocristanobrasil.org.br/assets/images/logo-ccb-light.png" style="background:#333; padding:5px; border-radius:8px;" alt="Logotipo">
             <h2>Acesso Restrito</h2>
-            <input type="password" id="sysPassword" placeholder="Digite a Senha">
-            <button onclick="checkAccess()">Entrar no Sistema</button>
+            <input type="password" id="sysPassword" placeholder="Digite a Senha" aria-label="Senha do sistema">
+            <button id="btnLogin">Entrar no Sistema</button>
             <p id="loginError">Senha Incorreta. Tente novamente.</p>
+            <p style="font-size:0.8rem; margin-top:10px; color:#555;">AVISO: Autenticação é client-side temporária. Migre para autenticação servidor-side em produção.</p>
         </div>
     </div>
 
@@ -131,8 +35,8 @@
     <div id="modeOverlay">
         <div class="mode-card">
             <h2>Selecione a aplicação</h2>
-            <button class="mode-btn" onclick="setAppMode('desktop')">💻 Desktop (Leitor código USB)</button>
-            <button class="mode-btn" onclick="setAppMode('mobile')">📱 Smartphone (Câmera)</button>
+            <button class="mode-btn" data-mode="desktop">💻 Desktop (Leitor código USB)</button>
+            <button class="mode-btn" data-mode="mobile">📱 Smartphone (Câmera)</button>
         </div>
     </div>
 
@@ -168,11 +72,11 @@
             <input type="date" id="dataInventario">
         </div>
 
-        <button id="btnStart" onclick="startInventory()">Iniciar Inventário</button>
+        <button id="btnStart">Iniciar Inventário</button>
 
         <div class="input-group" id="containerLeitorFisico" style="margin-top: 20px;">
             <label>Leitor de Código de Barras</label>
-            <input type="text" id="bemEscaneado" placeholder="Aguardando início..." readonly>
+            <input type="text" id="bemEscaneado" placeholder="Aguardando início..." readonly aria-label="Campo para leitura de código">
         </div>
 
         <div id="reader-container">
@@ -180,7 +84,8 @@
             <div id="reader"></div>
         </div>
 
-        <button id="btnFinalize" class="btn-danger" onclick="finalizeInventory()" disabled>Salvar Relatório e Finalizar</button>
+        <button id="btnFinalize" class="btn-danger" disabled>Salvar Relatório e Finalizar</button>
+        <button id="btnExportCsv" style="margin-top:8px;">Exportar CSV</button>
     </div>
 
     <div class="main-content" id="appMain">
@@ -200,391 +105,6 @@
         </div>
     </div>
 
-    <script>
-        // ==========================================
-        // 1. SISTEMA DE AUTENTICAÇÃO
-        // ==========================================
-        function checkAccess() {
-            const pwd = document.getElementById('sysPassword').value;
-            const senhaCorreta = "ccb2026"; 
-
-            if (pwd === senhaCorreta) {
-                document.getElementById('loginOverlay').style.display = 'none';
-                document.getElementById('modeOverlay').style.display = 'flex';
-                document.getElementById('appSidebar').classList.add('unlocked');
-                document.getElementById('appMain').classList.add('unlocked');
-            } 
-            else {
-                document.getElementById('loginError').style.display = 'block';
-                document.getElementById('sysPassword').value = '';
-            }
-        }
-        document.getElementById('sysPassword').addEventListener('keypress', function(e) { if (e.key === 'Enter') checkAccess(); });
-
-        // Proteção Anti-Hacker (Sanitização no momento da renderização)
-        function sanitizeText(str) {
-            if (!str) return "-";
-            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#x27;', "/": '&#x2F;' };
-            const reg = /[&<>"'/]/ig;
-            return String(str).replace(reg, (match)=>(map[match]));
-        }
-
-        // ==========================================
-        // 2. FUNÇÃO ROBUSTA DE LEITURA DO CSV (Corrige colunas sumindo)
-        // ==========================================
-        function splitCSV(row, delimiter) {
-            let cols =[];
-            let inQuotes = false;
-            let current = "";
-            for (let i = 0; i < row.length; i++) {
-                 let char = row[i];
-                 if (char === '"') { inQuotes = !inQuotes; } 
-                 else if (char === delimiter && !inQuotes) { cols.push(current.trim()); current = ""; } 
-                 else { current += char; }
-            }
-             cols.push(current.trim());
-             return cols;
-        }
-
-        // ==========================================
-        // 3. VARIÁVEIS GERAIS
-        // ==========================================
-        let appMode = 'desktop';
-        let html5QrCode = null;
-        let churchesMapping = {};  
-        let setorMapping = {};
-        let churchSectorMapping = {};
-        let allInventoryData =[];   
-        let currentChurchInventory = []; 
-        let unreadItems =[];        
-        let currentInputEnabled = false;
-        let lastScanTime = 0;
-        let audioContext = null;
-    document.getElementById('casaOracaoSelect')
-            .addEventListener('change', function() {
-           const codigo = this.value;
-           const setor = churchSectorMapping[codigo];
-        if (setor) {
-   document.getElementById('setorAdministrativoSelect')
-       .value = setor;
-    }
-});
-        function setAppMode(mode) {
-            appMode = mode;
-            document.getElementById('modeOverlay').style.display = 'none';
-            if(mode === 'mobile') document.getElementById('containerLeitorFisico').style.display = 'none';
-            else document.getElementById('reader-container').style.display = 'none';
-        }
-
-        function playBeep() {
-            try {
-                if (!audioContext) return;
-                const oscillator = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
-                oscillator.type = 'sine'; oscillator.frequency.value = 1000;
-                gainNode.gain.setValueAtTime(1, audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.1);
-                oscillator.connect(gainNode); gainNode.connect(audioContext.destination);
-                oscillator.start(); oscillator.stop(audioContext.currentTime + 0.1);
-            } catch (e) {}
-        }
-
-        // ==========================================
-        // 4. LEITURA DE ARQUIVOS (COM PARSER SEGURO)
-        // ==========================================
-     document.getElementById('fileIgrejas').addEventListener('change', function(event) {
-            const file = event.target.files[0];
-               if (!file) return;
-            const reader = new FileReader();
-    reader.onload = function(e) {
-    try {
-        const rows =
-            e.target.result.split(/\r\n|\n|\r/);
-               churchesMapping = {};
-               setorMapping = {};
-               churchSectorMapping = {};
-        const churchSelect =
-            document.getElementById('casaOracaoSelect');
-        const sectorSelect =
-            document.getElementById('setorAdministrativoSelect');
-        churchSelect.innerHTML ='<option value="">Selecione a Casa de Oração...</option>';
-        sectorSelect.innerHTML ='<option value="">Selecione o Setor...</option>';
-        const setoresEncontrados =
-            new Set();
-        const delimiter =rows[0].includes(';')? ';': ',';
-            let count = 0;
-        rows.slice(1).forEach(row => {
-            if (!row.trim()) return;
-        const cols =splitCSV(row, delimiter);
-            if (cols.length < 3) return;
-        const codigo = cols[0].replace(/[^0-9]/g, '');
-        const localidade = cols[1].trim();
-        const setor =  cols[2].trim().toUpperCase();
-            if (!codigo) return;
-        churchesMapping[codigo] = localidade;
-        churchSectorMapping[codigo] = setor;
-        churchSelect.appendChild(new Option(`${codigo} - ${localidade}`,codigo)
-            );
-            if (setor && !setoresEncontrados.has(setor)) {
-        setoresEncontrados.add(setor);
-        sectorSelect.appendChild(new Option(setor,setor)
-           );
-            }
-            count++;
-     });
-        alert(`${count} Casas de Oração carregadas`);
-    }
-    catch(err) {
-        alert('Erro ao carregar arquivo: '+ err.message);
-    }
-};
-       reader.readAsText(file, 'ISO-8859-1');
-});
-        document.getElementById('fileGeral').addEventListener('change', function(event) {
-            const file = event.target.files[0]; if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                try {
-                    const rows = e.target.result.split(/\r\n|\n|\r/);
-                    allInventoryData =[];
-                    let startIndex = 1, delimiter = ';';
-                    let idxCodigo = 0, idxNome = 3, idxDependencia = 15;
-
-                    // Procura o cabeçalho limpando as aspas da análise
-                    for (let i = 0; i < Math.min(10, rows.length); i++) {
-                        const line = rows[i] ? rows[i].toLowerCase() : "";
-                        if (line.includes("código") || line.includes("codigo") || line.includes("cod")) {
-                            startIndex = i + 1; 
-                            delimiter = line.indexOf(';') !== -1 ? ';' : ',';
-                            const headers = splitCSV(line, delimiter);
-                            headers.forEach((h, index) => {
-                                let cleanH = h.replace(/["']/g, '').trim();
-                                if (cleanH.includes("cod")) idxCodigo = index;
-                                else if (cleanH.includes("nome") || cleanH.includes("descri")) idxNome = index;
-                                else if (cleanH.includes("depend") || cleanH.includes("local")) idxDependencia = index;
-                            });
-                            break;
-                        }
-                    }
-                    
-                    rows.slice(startIndex).forEach(row => {
-                        if (!row.trim()) return;
-                        const cols = splitCSV(row, delimiter); 
-                        const rawCode = cols[idxCodigo] ? cols[idxCodigo] : "";
-                        const codigo = rawCode.replace(/[^0-9]/g, "").substring(0, 12);
-                        
-                        if (codigo) {
-                            // Salva a string crua e original na memória (Resolve falha do PDF)
-                            allInventoryData.push({
-                                codigo: codigo,
-                                nome: cols[idxNome] || "-",
-                                dependencia: cols[idxDependencia] || "-",
-                                status: "Não Localizado",
-                                churchCode: "Desconhecida" 
-                            });
-                        }
-                    });
-                    if (allInventoryData.length > 0) alert(`Bens carregados: ${allInventoryData.length} itens.`);
-                    else alert("Nenhum bem válido encontrado no arquivo CSV!");
-                } catch(e) { alert("Erro de arquivo: " + e.message); }
-            }; reader.readAsText(file, 'ISO-8859-1');
-        });
-
-        // ==========================================
-        // 5. LÓGICA DO INVENTÁRIO
-        // ==========================================
-        function startInventory() {
-            try {
-                if (allInventoryData.length === 0) { alert("A Base Geral não foi carregada ou está vazia."); return; }
-                const selectedChurchCode = document.getElementById('casaOracaoSelect').value;
-                if (!selectedChurchCode) { alert("Por favor, selecione a Casa de Oração."); return; }
-
-                if (!audioContext) {
-                    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-                    if (AudioContextClass) audioContext = new AudioContextClass();
-                }
-
-                const churchCodes = Object.keys(churchesMapping).sort((a, b) => b.length - a.length);
-                allInventoryData.forEach(item => {
-                    for (let cCode of churchCodes) {
-                        if (item.codigo && item.codigo.startsWith(cCode)) {
-                            item.churchCode = cCode; break;
-                        }
-                    }
-                });
-
-                currentChurchInventory = allInventoryData.filter(item => item.churchCode === selectedChurchCode);
-                unreadItems =[];
-                currentInputEnabled = true;
-
-                document.getElementById('btnStart').disabled = true;
-                document.getElementById('btnFinalize').disabled = false;
-                document.getElementById('fileIgrejas').disabled = true;
-                document.getElementById('fileGeral').disabled = true;
-                document.getElementById('casaOracaoSelect').disabled = true;
-                document.getElementById('setorAdministrativoSelect').disabled = true;
-                renderTable(); updateCounters();
-
-                if(appMode === 'desktop') {
-                    const inputBem = document.getElementById('bemEscaneado');
-                    inputBem.readOnly = false;
-                    inputBem.placeholder = "Escaneie o código aqui...";
-                    inputBem.focus();
-                    inputBem.addEventListener('keypress', event => {
-                        if (event.key === "Enter" && currentInputEnabled) {
-                            processBarcode(event.target.value);
-                            event.target.value = "";
-                        }
-                    });
-                } else {
-                    if (typeof Html5Qrcode === "undefined") throw new Error("Biblioteca da câmera bloqueada ou sem internet.");
-                    const readerContainer = document.getElementById('reader-container');
-                    const cameraStatus = document.getElementById('camera-status');
-                    
-                    readerContainer.style.display = 'block';
-                    cameraStatus.innerText = "Aguardando Câmera...";
-
-                    setTimeout(() => { readerContainer.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 100);
-
-                    setTimeout(() => {
-                        try {
-                            document.getElementById('reader').innerHTML = ""; 
-                            html5QrCode = new Html5Qrcode("reader");
-                            html5QrCode.start(
-                                { facingMode: "environment" }, { fps: 10 }, 
-                                (decodedText) => {
-                                    if (Date.now() - lastScanTime > 1500 && currentInputEnabled) {
-                                        lastScanTime = Date.now();
-                                        playBeep();
-                                        processBarcode(decodedText);
-                                    }
-                                }
-                            ).then(() => {
-                                cameraStatus.innerText = "Câmera Ativa. Aponte para o Código.";
-                                cameraStatus.style.backgroundColor = "var(--success)";
-                            }).catch(err => {
-                                cameraStatus.innerText = "Erro/Permissão Negada!";
-                                cameraStatus.style.backgroundColor = "var(--danger)";
-                                alert("Erro de Câmera: " + err);
-                            });
-                        } catch (camErr) { alert("Falha interna de Vídeo: " + camErr.message); }
-                    }, 400); 
-                }
-            } catch (err) { alert("Erro grave ao iniciar: " + err.message); }
-        }
-
-        function processBarcode(rawBarcode) {
-            if (!rawBarcode) return;
-            const formattedBarcode = rawBarcode.replace(/[^0-9]/g, "").substring(0, 12);
-            let foundInCurrent = false;
-            
-            for (let item of currentChurchInventory) {
-                if (item.codigo === formattedBarcode) {
-                    item.status = "Localizado";
-                    foundInCurrent = true; break;
-                }
-            }
-
-            if (!foundInCurrent && !unreadItems.find(item => item.codigo === formattedBarcode)) {
-                const foundInGlobal = allInventoryData.find(item => item.codigo === formattedBarcode);
-                if (foundInGlobal) {
-                    const nomeIgrejaAlheia = churchesMapping[foundInGlobal.churchCode] || "Igreja Desconhecida";
-                    unreadItems.push({ ...foundInGlobal, status: "Não Identificado", infoExtra: `Atenção: Este bem é da ${nomeIgrejaAlheia}` });
-                } else {
-                    unreadItems.push({ codigo: formattedBarcode, nome: "Não consta na Base Geral", dependencia: "-", status: "Não Identificado", infoExtra: "" });
-                }
-            }
-            renderTable(); updateCounters();
-        }
-
-        function updateCounters() {
-            const total = currentChurchInventory.length;
-            const located = currentChurchInventory.filter(i => i.status === "Localizado").length;
-            document.getElementById('countTotal').innerText = total;
-            document.getElementById('countLocated').innerText = located;
-            document.getElementById('countMissing').innerText = total - located;
-            document.getElementById('countUnknown').innerText = unreadItems.length;
-        }
-
-        function renderTable() {
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = "";
-            const allItems =[...currentChurchInventory, ...unreadItems];
-
-            if(allItems.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Nenhum item localizado para esta Casa de Oração.</td></tr>`; return;
-            }
-
-            allItems.forEach(item => {
-                let badgeClass = item.status === "Localizado" ? "bg-success" : item.status === "Não Localizado" ? "bg-danger" : "bg-warning";
-                
-                // Aplica a Sanitização APENAS na visualização HTML
-                const safeExtra = item.infoExtra ? sanitizeText(item.infoExtra) : "";
-                const extraHTML = safeExtra ? `<span class="alerta-ext">${safeExtra}</span>` : "";
-                
-                tbody.insertAdjacentHTML('beforeend', `<tr>
-                    <td><strong>${sanitizeText(item.codigo)}</strong></td>
-                    <td>${sanitizeText(item.nome)} ${extraHTML}</td>
-                    <td>${sanitizeText(item.dependencia)}</td>
-                    <td><span class="badge ${badgeClass}">${item.status}</span></td>
-                </tr>`);
-            });
-        }
-
-        // ==========================================
-        // 6. SALVAR RELATÓRIO AUTOMÁTICO E FINALIZAR
-        // ==========================================
-        function finalizeInventory() {
-            if (!confirm("Deseja fechar o inventário e baixar o arquivo PDF automaticamente?")) return;
-            currentInputEnabled = false;
-
-            if (html5QrCode) {
-                try { html5QrCode.stop().then(() => { document.getElementById('reader-container').style.display = 'none'; }).catch(e=>{}); } catch(e) {}
-            }
-
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('p', 'mm', 'a4');
-
-            doc.setFontSize(16); doc.setTextColor(42, 157, 143);
-            doc.text("Relatório de Inventário - Casa de Oração", 14, 20);
-            
-            const invName = document.getElementById('nomeInventariante').value;
-            const adminSector = document.getElementById('setorAdministrativoSelect').options[document.getElementById('setorAdministrativoSelect').selectedIndex].text;
-            const date = document.getElementById('dataInventario').value;
-            const churchName = document.getElementById('casaOracaoSelect').options[document.getElementById('casaOracaoSelect').selectedIndex].text;
-
-            doc.setFontSize(10); doc.setTextColor(51, 51, 51);
-            doc.text(`Inventariante: ${invName}`, 14, 30);
-            doc.text(`Setor Adm: ${adminSector}`, 14, 36);
-            doc.text(`Local: ${churchName}`, 14, 42);
-            doc.text(`Data: ${date}`, 14, 48);
-
-            const allItems = [...currentChurchInventory, ...unreadItems];
-            
-            // Aqui as variáveis vão limpas (sem os códigos do HTML/XSS), então aparecem corretamente no PDF
-            const tableData = allItems.map(item =>[ 
-                item.codigo, 
-                item.infoExtra ? `${item.nome}\n\n>> ${item.infoExtra}` : item.nome, 
-                item.dependencia, 
-                item.status 
-            ]);
-
-            doc.autoTable({
-                startY: 55, head: [["Código", "Nome / Descrição", "Dependência", "Status"]], body: tableData, theme: 'grid',
-                headStyles: { fillColor:[42, 157, 143] }, styles: { fontSize: 8 }, columnStyles: { 1: { cellWidth: 80 } },
-                didParseCell: function(data) {
-                    if (data.section === 'body' && data.column.index === 3) {
-                        if (data.cell.raw === "Localizado") data.cell.styles.textColor =[40, 167, 69];
-                        else if (data.cell.raw === "Não Localizado") data.cell.styles.textColor =[220, 53, 69];
-                        else if (data.cell.raw === "Não Identificado") data.cell.styles.textColor =[220, 120, 0];
-                    }
-                }
-            });
-
-            // Salvamento DIRETO AUTOMÁTICO
-            const safeChurchName = churchName.replace(/[^a-zA-Z0-9]/g, '_');
-            doc.save(`Inventario_${safeChurchName}.pdf`);
-        }
-    </script>
+    <script src="src/app.js" defer></script>
 </body>
 </html>
