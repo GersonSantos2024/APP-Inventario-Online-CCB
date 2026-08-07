@@ -258,13 +258,24 @@
         let html5QrCode = null;
         let churchesMapping = {};  
         let setorMapping = {};
+        let churchSectorMapping = {};
         let allInventoryData =[];   
         let currentChurchInventory = []; 
         let unreadItems =[];        
         let currentInputEnabled = false;
         let lastScanTime = 0;
         let audioContext = null;
+    document.getElementById('casaOracaoSelect')
+       .addEventListener('change', function() {
 
+          const codigo = this.value;
+          const setor = churchSectorMapping[codigo];
+            if (setor) {
+                  document.getElementById(
+            'setorAdministrativoSelect'
+        ).value = setor;
+    }
+});
         function setAppMode(mode) {
             appMode = mode;
             document.getElementById('modeOverlay').style.display = 'none';
@@ -288,75 +299,66 @@
         // ==========================================
         // 4. LEITURA DE ARQUIVOS (COM PARSER SEGURO)
         // ==========================================
-      document.getElementById('fileIgrejas').addEventListener('change', function(event) {
-            const file = event.target.files[0]; if (!file) return;
+     document.getElementById('fileIgrejas').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+               if (!file) return;
             const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const rows = e.target.result.split(/\r\n|\n|\r/);
-                    churchesMapping = {};
-                    const select = document.getElementById('casaOracaoSelect');
-                    select.innerHTML = '<option value="">Selecione a Casa de Oração...</option>';
-                    const delimiter = rows[0].indexOf(';') !== -1 ? ';' : ',';
-                    let count = 0;
+     reader.onload = function(e) {
+        try {
+            const rows = e.target.result.split(/\r\n|\n|\r/);
+            churchesMapping = {};
+            setorMapping = {};
+            churchSectorMapping = {};
+            const churchSelect =
+                document.getElementById('casaOracaoSelect');
+            const sectorSelect =
+                document.getElementById('setorAdministrativoSelect');
+            churchSelect.innerHTML =
+                '<option value="">Selecione a Casa de Oração...</option>';
+            sectorSelect.innerHTML =
+                '<option value="">Selecione o Setor...</option>';
+            const setoresEncontrados = new Set();
+            const delimiter =
+                rows[0].includes(';') ? ';' : ',';
+            let count = 0;
+            rows.slice(1).forEach(row => {
+                if (!row.trim()) return;
+                const cols = splitCSV(row, delimiter);
+                if (cols.length < 3) return;
+                const codigo =
+                    cols[0].replace(/[^0-9]/g, '');
+                const localidade =
+                    cols[1].trim();
+                const setor =
+                    cols[2].trim();
+                if (!codigo) return;
+                churchesMapping[codigo] =
+                    localidade;
+                churchSectorMapping[codigo] =
+                    setor;
+                churchSelect.appendChild(
+                    new Option(
+                        `${codigo} - ${localidade}`,
+                        codigo
+                    )
+                );
 
-                    rows.forEach(row => {
-                        if (!row.trim()) return;
-                            const cols = splitCSV(row, delimiter);
-                        if (cols.length >= 2) {
-                            const code = cols[0].replace(/[^0-9]/g, ""); 
-                            const name = cols[1];
-                            if (code && !name.toLowerCase().includes("nome")) {
-                                churchesMapping[code] = name;
-                                select.appendChild(new Option(`${code} - ${name}`, code));
-                                count++;
-                            }
-                        }
-                });
-                     if(count > 0) 
-                         alert(`Igrejas carregadas: ${count} locais.`);
-                    else 
-                         alert("Nenhuma igreja válida encontrada no arquivo CSV!");
-                    
-                } catch(err) { alert("Erro de arquivo: " + err.message);
-            }
-        };
-                reader.readAsText(file, 'ISO-8859-1');
-    });
-
-      document.getElementById('fileSetor').addEventListener('change', function(event) {
-             const file = event.target.files[0];
-             if (!file) return;
-             const reader = new FileReader();
-             reader.onload = function(e) {
-                try {
-                    const rows = e.target.result.split(/\r\n|\n|\r/);
-                       setorMapping = {};
-                    const select = document.getElementById('setorAdministrativoSelect');
-                       select.innerHTML ='<option value="">Selecione o Setor...</option>';
-                    const delimiter =
-                       rows[0].indexOf(';') !== -1 ? ';' : ',';
-                    let count = 0;           
-                    rows.forEach(row => {
-                        if (!row.trim()) return;
-                           const cols = splitCSV(row, delimiter);
-                        if (cols.length >= 2) {
-                           const code = cols[1].replace(/[^0-9]/g, '');
-                           const name = cols[2].trim();
-                        if (code && !name.toLowerCase().includes('nome')) {
-                        setorMapping[code] = name;
-                        select.appendChild(new Option(`${code} - ${name}`,code));
+                if (
+                    setor &&
+                    !setoresEncontrados.has(setor)
+                ) {
+                    setoresEncontrados.add(setor);
+                    setorMapping[setor] = setor;
+                    sectorSelect.appendChild(
+                        new Option(
+                            setor,
+                            setor
+                        )
+                    );
+                }
                 count++;
-               }
-            }
-        });
-                    if (count > 0)
-                        alert(`Setores carregados: ${count}`);
-                    else
-                       alert('Nenhum setor encontrado.');
-               } catch (err) 
-                       { alert('Erro ao carregar setores: ' +err.message);
-             }
+            });
+            alert(           
         };
               reader.readAsText(file, 'ISO-8859-1');
 });
