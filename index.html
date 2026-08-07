@@ -442,7 +442,7 @@
                 document.getElementById('fileIgrejas').disabled = true;
                 document.getElementById('fileGeral').disabled = true;
                 document.getElementById('casaOracaoSelect').disabled = true;
-
+                document.getElementById('setorAdministrativoSelect').disabled = true;
                 renderTable(); updateCounters();
 
                 if(appMode === 'desktop') {
@@ -569,7 +569,7 @@
             doc.text("Relatório de Inventário - Casa de Oração", 14, 20);
             
             const invName = document.getElementById('nomeInventariante').value;
-            const adminSector = document.getElementById('setorAdministrativo').value;
+            const adminSector = document.getElementById('setorAdministrativoSelect').options[document.getElementById('setorAdministrativoSelect').selectedIndex].text;
             const date = document.getElementById('dataInventario').value;
             const churchName = document.getElementById('casaOracaoSelect').options[document.getElementById('casaOracaoSelect').selectedIndex].text;
 
