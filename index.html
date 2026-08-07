@@ -261,11 +261,13 @@
         let lastScanTime = 0;
         let audioContext = null;
     document.getElementById('casaOracaoSelect')
-       .addEventListener('change', function() {
-          const codigo = this.value;
-          const setor = churchSectorMapping[codigo];
-            if (setor) {
-                  document.getElementById('setorAdministrativoSelect'
+            .addEventListener('change', function() {
+    const codigo = this.value;
+    const setor =
+        churchSectorMapping[codigo];
+    if (setor) {
+        document.getElementById(
+            'setorAdministrativoSelect'       
         ).value = setor;
     }
 });
@@ -350,9 +352,14 @@
                     );
                 }
                 count++;
-            });
-            alert(           
-        };
+});
+
+         alert(`${count} Casas de Oração carregadas`);
+    } 
+        catch(err) {
+         alert('Erro ao carregar arquivo: ' +  err.message);
+       }
+   };
               reader.readAsText(file, 'ISO-8859-1');
 });
         document.getElementById('fileGeral').addEventListener('change', function(event) {
