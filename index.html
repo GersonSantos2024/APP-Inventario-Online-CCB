@@ -317,7 +317,7 @@
                         if (!row.trim()) return;
                         const cols = splitCSV(row, delimiter);
                         if (cols.length >= 2) {
-                            const code = cols[0].replace(/[^0-9]/g, ""); 
+                            const name = cols[1].replace(/[^0-9]/g, ""); 
                             const name = cols[2];
                             if (code && !name.toLowerCase().includes("nome")) {
                                 setorMapping[code] = name;
