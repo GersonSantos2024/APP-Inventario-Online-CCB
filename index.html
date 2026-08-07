@@ -144,7 +144,7 @@
 
         <div class="input-group">
             <label>1. Tabela de Casas de Oração</label>
-            <input type="file" id="fileIgrejas" accept=".csv">
+            <input type="file" id="fileIgrejas" accept=".csv">     
         </div>
         
         <div class="input-group">
@@ -341,8 +341,8 @@
                         if (!row.trim()) return;
                            const cols = splitCSV(row, delimiter);
                         if (cols.length >= 2) {
-                           const code = cols[0].replace(/[^0-9]/g, '');
-                           const name = cols[1].trim();
+                           const code = cols[1].replace(/[^0-9]/g, '');
+                           const name = cols[2].trim();
                         if (code && !name.toLowerCase().includes('nome')) {
                         setorMapping[code] = name;
                         select.appendChild(new Option(`${code} - ${name}`,code));
