@@ -146,7 +146,12 @@
             <label>1. Tabela de Casas de Oração</label>
             <input type="file" id="fileIgrejas" accept=".csv">
         </div>
-
+        
+        <div class="input-group">
+            <label>2. Tabela de Setores</label>
+            <input type="file" id="fileSetor" accept=".csv">
+        </div>
+        
         <div class="input-group">
             <label>2. Base Geral de Bens</label>
             <input type="file" id="fileGeral" accept=".csv">
@@ -283,7 +288,7 @@
         // ==========================================
         // 4. LEITURA DE ARQUIVOS (COM PARSER SEGURO)
         // ==========================================
-        document.getElementById('fileIgrejas').addEventListener('change', function(event) {
+      document.getElementById('fileIgrejas').addEventListener('change', function(event) {
             const file = event.target.files[0]; if (!file) return;
             const reader = new FileReader();
             reader.onload = function(e) {
@@ -297,7 +302,7 @@
 
                     rows.forEach(row => {
                         if (!row.trim()) return;
-                        const cols = splitCSV(row, delimiter);
+                            const cols = splitCSV(row, delimiter);
                         if (cols.length >= 2) {
                             const code = cols[0].replace(/[^0-9]/g, ""); 
                             const name = cols[1];
@@ -306,13 +311,58 @@
                                 select.appendChild(new Option(`${code} - ${name}`, code));
                                 count++;
                             }
-                        }                   
-                     if(count > 0) alert(`Igrejas carregadas: ${count} locais.`);
-                    else alert("Nenhuma igreja válida encontrada no arquivo CSV!");
-                } catch(e) { alert("Erro de arquivo: " + e.message); }
-            }; reader.readAsText(file, 'ISO-8859-1');
-        });
+                        }
+                });
+                     if(count > 0) 
+                         alert(`Igrejas carregadas: ${count} locais.`);
+                    else 
+                         alert("Nenhuma igreja válida encontrada no arquivo CSV!");
+                    
+                } catch(err) { alert("Erro de arquivo: " + e.message); }
 
+                );
+            }
+        };
+                reader.readAsText(file, 'ISO-8859-1');
+    });
+
+      document.getElementById('fileSetor').addEventListener('change', function(event) {
+             const file = event.target.files[0];
+             if (!file) return;
+             const reader = new FileReader();
+             reader.onload = function(e) {
+                try {
+                    const rows = e.target.result.split(/\r\n|\n|\r/);
+                    setorMapping = {};
+                    const select = document.getElementById('setorAdministrativoSelect');
+                    select.innerHTML ='<option value="">Selecione o Setor...</option>';
+                    const delimiter =
+                    rows[0].indexOf(';') !== -1 ? ';' : ',';
+                    let count = 0;
+                    
+                    rows.forEach(row => {
+                        if (!row.trim()) return;
+                           const cols = splitCSV(row, delimiter);
+                        if (cols.length >= 2) {
+                           const code = cols[0].replace(/[^0-9]/g, '');
+                   const name = cols[1].trim();
+                       if (code && !name.toLowerCase().includes('nome')
+                    ) {
+                        setorMapping[code] = name;
+                        select.appendChild(new Option(`${code} - ${name}`,code));
+                count++;
+           }
+          }
+      });
+                    if (count > 0)
+                        alert(`Setores carregados: ${count}`);
+                    else
+                       alert('Nenhum setor encontrado.');
+           } catch (err) { alert('Erro ao carregar setores: ' +err.message);}
+      );
+    }
+          reader.readAsText(file, 'ISO-8859-1');
+});
         document.getElementById('fileGeral').addEventListener('change', function(event) {
             const file = event.target.files[0]; if (!file) return;
             const reader = new FileReader();
