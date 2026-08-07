@@ -155,10 +155,11 @@
         <div class="input-group">
             <label>Casa de Oração</label>
             <select id="casaOracaoSelect"><option value="">Aguardando Arquivo...</option></select>
-            
+       </div> 
+        
         <div class="input-group">
-            <label>Setor</label>
-            <select id="setorSelect"><option value="">Aguardando Arquivo...</option></select>
+            <label>Setor Administrativo</label>
+            <select id="setorAdministrativoSelect"><option value="">Aguardando Arquivo...</option></select>
         </div>
         
         <div class="input-group">
@@ -212,7 +213,8 @@
                 document.getElementById('modeOverlay').style.display = 'flex';
                 document.getElementById('appSidebar').classList.add('unlocked');
                 document.getElementById('appMain').classList.add('unlocked');
-            } else {
+            } 
+            else {
                 document.getElementById('loginError').style.display = 'block';
                 document.getElementById('sysPassword').value = '';
             }
@@ -235,13 +237,13 @@
             let inQuotes = false;
             let current = "";
             for (let i = 0; i < row.length; i++) {
-                let char = row[i];
-                if (char === '"') { inQuotes = !inQuotes; } 
-                else if (char === delimiter && !inQuotes) { cols.push(current.trim()); current = ""; } 
-                else { current += char; }
+                 let char = row[i];
+                 if (char === '"') { inQuotes = !inQuotes; } 
+                 else if (char === delimiter && !inQuotes) { cols.push(current.trim()); current = ""; } 
+                 else { current += char; }
             }
-            cols.push(current.trim());
-            return cols;
+             cols.push(current.trim());
+             return cols;
         }
 
         // ==========================================
@@ -305,6 +307,11 @@
                                 count++;
                             }
                         }
+                        
+        document.getElementById('fileSetor').addEventListener('change', function(event) {
+            const file = event.target.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {   
                try {
                    const rows = e.target.result.split(/\r\n|\n|\r/);
                    setorMapping = {};
@@ -317,7 +324,7 @@
                         if (!row.trim()) return;
                         const cols = splitCSV(row, delimiter);
                         if (cols.length >= 2) {
-                            const name = cols[1].replace(/[^0-9]/g, ""); 
+                            const code = cols[1].replace(/[^0-9]/g, ""); 
                             const name = cols[2];
                             if (code && !name.toLowerCase().includes("nome")) {
                                 setorMapping[code] = name;
